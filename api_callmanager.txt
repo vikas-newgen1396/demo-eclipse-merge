@@ -1,0 +1,386 @@
+
+if (typeof (jQuery) != 'function') {
+	if (typeof (console) != 'undefined' && console)
+		console.info("Fatal Error : jQuery is not installed yet!");
+	throw "jQuery not defined yet";
+}
+
+if (typeof (ngclientframework) == 'undefined')
+ngclientframework = {};
+if (typeof (ngclientframework.views) == 'undefined')
+ngclientframework.views = {};
+if (typeof (ngclientframework.views.adminUi) == 'undefined')
+ngclientframework.views.adminUi = {
+		modelBuilder : function(viewObject) {
+			
+			openNav();
+			updateGraph();
+			var call="dashboardCall";
+			var dash={};//{status: "200", data: "{"oldcases":"{\"rejected\":1,\"pending\":2}","newcases":"{\"rejected\":1}"}", errorMsg: "nope"};//{data: {"news":{"rejected":0,"submitted":0,"pending":0},"old":{"rejected":0,"submitted":0}}};
+		/*******************************RETRIEVE VALUES************************************************/
+		//var buc=localStorage.getItem("request");
+//		var dummy={data: {"news":{"rejected":2,"submitted":1,"Pending":1},"old":{"rejected":1,"submitted":4}}};
+//		var dashData=$NGjStorage.get("dashData");
+//		var dash=dashData.data;
+//		var dummy.news.submitted = dash.news.submitted;
+//		var dummy.news.rejected = dash.news.rejected;
+//		var acceptedBUC = dash.news.accepted;
+//		var otherBUC = dash.news.pending;
+//		var oldSubmittedBUC = dash.old.submitted;
+//		var oldRejectedBUC = dash.old.rejected;
+//		var oldAcceptedBUC = dash.old.accepted;
+//		var oldOtherBUC = dash.old.pending;
+			function updateGraph(){
+				var newDash=$NGjStorage.get("dashData");;
+				dash=newDash;
+				if(call=="dashboardCall"){
+				var oldCases;
+				var newCases;
+				var cases=JSON.parse(dash.data);
+				if(cases.hasOwnProperty('oldcases')){
+					oldCases=JSON.parse(cases.oldcases);
+				}else{
+					oldCases={"accepted":0,"rejected":0,"submitted":0,"pending":0};
+					console.log("oldCases is empty");
+				}
+				if(cases.hasOwnProperty('newcases')){
+					newCases=JSON.parse(cases.newcases);
+				}else{
+					newCases={"accepted":0,"rejected":0,"submitted":0,"pending":0};
+					console.log("newCases is empty");
+				}
+				
+				donutChart(newCases);
+				columnChart(oldCases,newCases);
+				updateText(newCases);
+				setTimeout(function(){
+					document.getElementById("overlay").style.display = "none";
+				},1000);
+				}else if(call=="deviceCall"){
+				  var deviceCardInfo=JSON.parse(JSON.parse(dash.data).deviceList);
+				  addDeviceCards(deviceCardInfo);
+				}
+			}
+		
+	  /*******************************GOOGLE CHARTS************************************************/
+		  
+		       function donutChart(newCases){
+				  google.charts.load("current", {packages:["corechart"]});
+				  google.charts.setOnLoadCallback(drawChart);
+				        function drawChart() {
+				          var data = google.visualization.arrayToDataTable([
+				            ['Task', 'Hours per Day'],
+				            ['Submitted', newCases.submitted ],
+				            ['Rejected',  newCases.rejected ],
+				            ['Accepted', newCases.accepted ],
+				            ['Pending',  newCases.pending ],
+				          ]);
+				          var options = {
+				            pieHole: 0.8,
+				  		  pieSliceText:'none',
+				  		  colors: ['#2A87D1', '#44DCE8', '#E35980', '#E7AF48',],
+				  		  height:"100%",
+				          };
+				          var chart = new google.visualization.PieChart(document.getElementById('donutchart'));
+				          chart.draw(data, options);
+				        }
+		       }  	  
+				  	  
+				  	  
+				function columnChart(oldCases,newCases){
+				 google.charts.load('current', {'packages':['corechart']});
+				 google.charts.setOnLoadCallback(drawChart1);
+				 function drawChart1() {
+				                var data = google.visualization.arrayToDataTable([
+				                  ['BUC Status', '',{ role: 'style' }, '',{ role: 'style' } , '',{ role: 'style' }],
+				                  ['Submitted', newCases.submitted,'color:#2A87D1', 0,'color:white' , oldCases.submitted,'color:#85AFE2'],
+				                  ['Rejected', newCases.rejected,'color:#44DCE8', 0,'color:white' , oldCases.rejected,'color:#91DBE3'],
+				                  ['Accepted', newCases.accepted,'color:#E35980', 0,'color:white' , oldCases.accepted,'color:#F5A6BC'],
+				        		  ['Pending', newCases.pending,'color:#E7AF48', 0,'color:white' , oldCases.pending,'color:#ECD38D'],
+				                ]);
+				                var options = {
+				                  chart: {
+				                    //title: 'Company Performance',
+				                    //subtitle: 'Sales, Expenses, and Profit: 2014-2017',
+				                  },
+				        		    legend: {position: 'none'},
+				        			chartArea:{left:20,width:"90%"},
+				        		    height:"90%",
+				        			width:"190%",
+				        			bar: {groupWidth: "20%"},
+				        			//colors: ['#2A87D1', '#44DCE8', '#E35980', '#E7AF48','#f6c7b6', '#f6c7b6'],
+				                };
+				                var chart = new google.visualization.ColumnChart(document.getElementById('columnchart'));
+				                chart.draw(data, options);
+				 	}	  
+				}
+//				  google.charts.load('current', {'packages':['bar']});
+//				  google.charts.setOnLoadCallback(drawChart1);
+//				        function drawChart1() {
+//				          var data = google.visualization.arrayToDataTable([
+//				            ['Year', 'Sales', 'Expenses'],
+//				            ['2014', 1000, 400],
+//				            ['2015', 1170, 460],
+//				            ['2016', 660, 1120],
+//				            ['2017', 1030, 540]
+//				          ]);
+//				          var options = {
+//				            chart: {
+//				              //title: 'Company Performance',
+//				              //subtitle: 'Sales, Expenses, and Profit: 2014-2017',
+//				            },
+//				  			chartArea:{left:10,top:20},
+//				  		    height:"90%",
+//				  			colors: ['#e0440e', '#e6693e', '#ec8f6e', '#f3b49f', '#f6c7b6'],
+//				  			is3D: true,
+//				          };
+//				          var chart = new google.charts.Bar(document.getElementById('columnchart'));
+//				          chart.draw(data, google.charts.Bar.convertOptions(options));
+//				        }
+				  	  
+				    $(window).resize(function(){
+				    drawChart();
+				    drawChart1();
+				    });
+				    
+				    /***********************************TEXT MANIPULATION*******************************************/
+				  function updateText(newCases){
+				  	$('#submittedBUC div h1').text(newCases.submitted);
+				  	$('#activeDevices div h1').text(newCases.rejected);
+				  	$('#regRequest div h1').text(newCases.accepted);
+				  	$('#crashes div h1').text(newCases.pending);
+				  	$('#bottom-submitted p').text(newCases.submitted);
+				  	$('#bottom-rejected p').text(newCases.rejected);
+				  	$('#bottom-accepted p').text(newCases.accepted);
+				  	$('#bottom-others p').text(newCases.pending);
+				  }
+
+				   
+				   /***********************************NOTCH MIGRATION*********************************************/
+				   $('#submittedBUC').click(function(){
+				  	 $('.notch').css('margin-left','13%');
+				   });
+				   $('#activeDevices').click(function(){
+				  	 $('.notch').css('margin-left','37%');
+				   });
+				   $('#regRequest').click(function(){
+				  	 $('.notch').css('margin-left','61%');
+				   });
+				   $('#crashes').click(function(){
+				  	 $('.notch').css('margin-left','85%');
+				   });
+				   
+				  /*******************************SHOW-HIDE DEVICE VIEW********************************************/ 
+				    $('#manage-ul').click(function(){
+				  		 if($("#dashboardActivity").is(":visible")){
+				  		   $('#dashboardActivity').hide(300);document.getElementById("overlay").style.display = "block";
+				  		 call="deviceCall";
+				  		 var requestCall={"requestType":"deviceList", "requestValue":{"queryType":"today"}};
+						 requestPush(requestCall);
+				  		 setTimeout(function(){
+				  		   document.getElementById("overlay").style.display = "none";
+				  		   $('#deviceActivity').show(300);
+				  		   addDeviceCards();
+				  		   },1000);
+				  		 }else{
+				  			 
+				  		 }
+				    });
+				    $('#dashboard-ul').click(function(){
+				    	if($("#deviceActivity").is(":visible")){
+				 		   $('#deviceActivity').hide();
+				 		   document.getElementById("overlay").style.display = "block";
+				 		   setTimeout(function(){
+				 			document.getElementById("overlay").style.display = "none";
+				 		   $('#dashboardActivity').show();
+				 		   },1000);
+				 		 }
+				    });
+				    
+				    
+				    /*****************************SPINNER AND ONCLICK CSS MANIPULATIONS***************************************/ 
+				    $(".left-four ul").click(function(){
+				  	$(".left-four ul").removeClass("left-four-click");
+				      $(this).addClass("left-four-click");
+				    });
+				    $(".button-wrapper button").click(function(){
+				  	  $(".button-wrapper button").removeClass("button-clk");
+				      $(this).addClass("button-clk");
+				    });
+				    
+				    $("#today-btn").click(function(){
+				      var requestCall={"requestType":"bucCounts", "requestValue":{"queryType":"day"}};
+				  	  requestPush(requestCall);
+				    });
+				  	$("#weekly-btn").click(function(){
+				  		var requestCall={"requestType":"bucCounts", "requestValue":{"queryType":"week"}};
+					  	requestPush(requestCall);
+					});
+					$("#monthly-btn").click(function(){
+						var requestCall={"requestType":"bucCounts", "requestValue":{"queryType":"month"}};
+					  	requestPush(requestCall);
+					});
+					function requestPush(requestCall){
+						var that=this;
+						document.getElementById("overlay").style.display = "block";
+						NGAPICallManager.dataFetchRequest(requestCall,function(request){
+							if(request.status!=200){
+								setTimeout(function(){
+									document.getElementById("overlay").style.display = "none";
+								},1000);
+						  		console.log("Error is "+request.status);
+						  		customBootboxAlert("Error in fetching data"+ request.status);
+						  		$NGRootView.showView('login');
+							}else{
+								$NGjStorage.set("dashData",request);
+								updateGraph();
+							}
+					  	});
+					}
+					  	  
+					  	  
+				    function openNav(){
+				                var iDiv = document.createElement('div');
+				              	iDiv.id = 'overlay';
+				              	iDiv.className = 'overlaypro';
+				              	document.getElementsByTagName('body')[0].appendChild(iDiv);
+
+				              	var innerDiv = document.createElement('div');
+				                innerDiv.id = 'progressbar-container';
+				              	iDiv.appendChild(innerDiv);
+				                  
+				                var progressDiv = document.createElement('img');
+				                progressDiv.id = 'progressbar';
+				  				progressDiv.src = 'images/loader.gif';
+				              	innerDiv.appendChild(progressDiv);
+				              	
+				              	var progressText = document.createElement("p");
+				              	progressText.id = 'ptext';
+				                iDiv.appendChild(progressText);
+				             
+				                document.getElementById("ptext").innerHTML="....";
+				    }
+				    
+				    
+				   /*************************************CREATE AND UPDATE DYNAMIC DIVS***************************************/
+//				    var dataResponse={"deviceCount":4,"data":[{"device1":{"os":"android","device":"iphoneX","version":"10.1.1","app":"IndusInd Bank"},"device2":{"os":"android","device":"android","version":"8.0.1","app":"IndusInd Tab Banking"}}]}; 
+				    
+				    
+				    function addDeviceCards(deviceCardInfo){
+				      var idCount=0;
+				      var cardCount=deviceCardInfo.length;
+				      $(".row1-col1").remove();
+				  	  for(var i=0;i<cardCount;i++){
+				  	  $( $.parseHTML( "<div class=\"row1-col1 col-3\">\
+				  						<div class=\"row1-col1-wrapper col-10\">\
+				  							<div class=\"row1-col1-top col-12\">\
+				  								<div class=\"row-col1-icon\">\
+				  								<img src=\"iOS.png\" id=\"osLogo\">\
+				  								</div>\
+				  								<div class=\"row1-col1-device col-4\">\
+				  									<p id=\"device\">----------</p>\
+				  								</div>\
+				  							</div>\
+				  							<div class=\"row1-col1-mid col-12\">\
+				  								<div class=\"row1-col1-os col-10\">\
+				  									<p>OS Version</p>\
+				  								<div class=\"row1-col1-osVer\">\
+				  									<p id=\"version\">----------</p>\
+				  								</div>\
+				  							</div>\
+				  							<div class=\"row1-col1-app\">\
+				  								<p>App Installed</p>\
+				  								<div class=\"row1-col1-appName\">\
+				  									<p id=\"app\">-------------/p>\
+				  								</div>\
+				  							</div>\
+				  						</div>\
+				  						<div class=\"row1-col1-bottom col-12\">\
+				  							<div class=\"probe\" id=\"probe\">\
+				  								<div class=\"row1-col1-accept col-6\" id=\"pick\">\
+				  									<p>Accept</p>\
+				  								</div>\
+				  								<div class=\"row1-col1-reject col-6\" id=\"reject\">\
+				  									<p>Reject</p>\
+				  								</div>\
+				  							</div>\
+				  							<div class=\"final-accept col-12\" id=\"accept\">\
+				  								<i class=\"fa fa-check-circle\"></i>\
+				  								<p>ACCEPTED</p>\
+				  							</div>\
+				  							<div class=\"final-reject col-12\" id=\"reject\">\
+				  								<p>REJECTED</p>\
+				  							</div>\
+				  						</div>\
+				  					</div>\
+				  				</div>" ) ).appendTo( ".deviceRow1" );
+				  	  idCount++;
+				  	  $("#probe").attr("id","probe"+idCount);
+				  	  $("#pick").attr("id","pick"+ idCount);
+				  	  $("#reject").attr("id","drop"+ idCount);
+				  	  $("#accept").attr("id","accept"+ idCount);
+				  	  $("#reject").attr("id","reject"+ idCount);
+				  	  $("#device").attr("id","device"+ idCount);
+				  	  $("#version").attr("id","version"+ idCount);
+				  	  $("#app").attr("id","app"+ idCount);
+				  	  $("#osLogo").attr("id","osLogo"+ idCount);
+				  	  var osLogo="#osLogo"+idCount;
+				  	  if(deviceCardInfo[i].deviceOS==="android"){
+				  	    $(osLogo).attr("src","androidLogo.jpg");
+				  	  }else{
+				  		$(osLogo).attr("src","ios.png");  
+				  	  }
+				  	  $('#device'+idCount).text(deviceCardInfo[i].deviceName);
+					  $('#version'+idCount).text(deviceCardInfo[i].deviceOS);
+					  $('#app'+idCount).text(deviceCardInfo[i].deviceRefId);
+				  	  }
+				    }
+				    
+				   /***********************DEVICE CARD ACCEPTION REJECTION HANDLING*******************************/
+				    $(document).on('click','.row1-col1-accept',function(event) {
+				      var divId = $(this).attr('id');
+				  	console.log(divId);
+				  	var num=divId.slice(-1);
+				  	var probe="#probe"+num;
+				  	var accept="#accept"+num;
+				  	var device="#device"+num;
+				  	var version="#version"+num;
+				  	var app="#app"+num;
+				  	$(probe).hide();
+				  	$(accept).show();
+				  	
+				  	var decisionInfo={};
+				  	decisionInfo.device=$(device).text();
+				  	decisionInfo.version=$(version).text();
+				  	decisionInfo.app=$(app).text();
+				  	decisionInfo.decision="accepted";
+				  	console.log(decisionInfo);
+				    });
+				    $(document).on('click','.row1-col1-reject',function(event) {
+				      var divId = $(this).attr('id');
+				  	console.log(divId);
+				  	var num=divId.slice(-1);
+				  	var probe="#probe"+num;
+				  	var reject="#reject"+num;
+				  	var device="#device"+num;
+				  	var version="#version"+num;
+				  	var app="#app"+num;
+				  	$(probe).hide();
+				  	$(reject).show();
+				  	
+				  	var decisionInfo={};
+				  	decisionInfo.device=$(device).text();;
+				  	decisionInfo.version=$(version).text();;
+				  	decisionInfo.app=$(app).text();;
+				  	decisionInfo.decision="rejected";
+				  	console.log(decisionInfo);
+				    });		  
+				  
+				  
+		},
+		eventHandler : function(event, viewObject) {
+		}
+}; 
+
+var modelBuilders = [ngclientframework.views.adminUi.modelBuilder];
+var eventHandlers = [ngclientframework.views.adminUi.eventHandler];

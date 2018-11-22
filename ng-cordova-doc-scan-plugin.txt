@@ -1,0 +1,68 @@
+﻿/**
+ * 
+ */
+
+var NGDocScan = {
+
+
+
+		/**
+        		 * method will capture multiple docs
+        		 *
+        		 * @param successCallback :
+        		 *				It is a method called on the success of plugin.
+        		 * @param errorCallback :
+        		 *				It is a method called in case of error caused in the plugin.
+        		 *
+        		 * @returns outImg : processed image paths array.
+        		 */
+
+        		scanDocs : function(parameters,successCallback, errorCallback) {
+        		    var isInvalid = this.validateParameters(parameters);
+        		    if(parameters==null || isInvalid){
+                           console.log("Empty parameter in doc-scan plugin");
+                    }else{
+        			    if (navigator.userAgent.match(/(Windows NT)/)) {
+        			        return;
+        			    } else {
+        				    cordova.exec(successCallback, // success callback function
+        						errorCallback, // error callback function
+        						'NgDocScanPlugin', // mapped to our native Java class
+        						// called "ZoneExtractionPlugin"
+        						'scanDocs', //with this action name
+        						[ { // and this array of custom arguments to create our entry
+                                 "params" : parameters,
+        						} ]
+
+        				    );
+        			    }
+        			}
+
+        		},
+
+        		validateParameters : function(parameters){
+                                    var isInvalid=false;
+                                    try{
+                                        if(parameters.width==null || parameters.width=='undefined')
+                                             isInvalid = true;
+                                        if(parameters.height==null || parameters.height=='undefined')
+                                             isInvalid = true;
+                                        if(parameters.focus==null || parameters.focus=='undefined')
+                                             isInvalid = true;
+                                        if(parameters.quality==null || parameters.quality=='undefined')
+                                             isInvalid = true;
+                                        if(parameters.doPerspectiveCorrection==null || parameters.doPerspectiveCorrection=='undefined')
+                                             isInvalid = true;
+                                        if(parameters.totalNoOfImages==null || parameters.totalNoOfImages=='undefined')
+                                             isInvalid = true;
+
+                                        return isInvalid;
+                                    }catch(error){
+                                        isInvalid = true;
+                                        return isInvalid;
+                                    }
+
+                }
+
+
+}
