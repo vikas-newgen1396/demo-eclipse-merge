@@ -1,4 +1,4 @@
-
+//hello
 if (typeof (jQuery) != 'function') {
 	if (typeof (console) != 'undefined' && console)
 		console.info("Fatal Error : jQuery is not installed yet!");
